@@ -7,3 +7,5 @@ Build a Telegram Bot using any nodejs npm package that can
 
 use this npm library https://www.npmjs.com/package/node-telegram-bot-api
 
+
+Use npm start to start the project

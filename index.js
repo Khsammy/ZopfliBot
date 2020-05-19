@@ -1,12 +1,13 @@
 const TelegramBot = require("node-telegram-bot-api");
 const getWeather = require("./api/weather/weather_api");
-const nairaToUsd = require("./api/currency/convert_currency").naira_to_usd;
+// convert currency
 const usdToNaira = require("./api/currency/convert_currency").usd_to_naira;
+const nairaToUsd = require("./api/currency/convert_currency").naira_to_usd;
+// config host and port
 const { host, port } = require("./config/config");
 const url = host + ":" + port + "/api/get/";
-// const url = "http://127.0.0.1:5000/api/get/";
 
-// token gotten from @BotFather
+// token from @BotFather
 const token = "1184087963:AAFFvqhvSHmelCqYPl5_EyTvYw3lI3eUUMw";
 
 // create a new bot
@@ -14,78 +15,75 @@ const bot = new TelegramBot(token, { polling: true });
 
 // help
 function help() {
-  welcome_msg = "Welcome to ZopfliBot";
+  header_msg = "<b>Welcome to ZopfliBot</b>";
   description =
     "This is a bot that tells the weather conditions of countries and Also, converts USD to Naira and vice versa.";
   commands =
-    "/help - help \n /get_weather - get weather \n /usd2naira - usd to naira \n /naira2usd - naira to usd ";
+    "Commands - \n /help - help \n /get_weather [city] - get weather \n /usd2naira [Amount in USD] -> usd to naira \n /naira2usd [Amount in Naira] -> naira to usd ";
 
-  return welcome_msg + "\n\n" + description + "\n\n" + commands;
+  return header_msg + "\n\n" + description + "\n\n" + commands;
 }
 
-// commands
+// Commands
 
 // help
 bot.onText(/\/help/, (msg) => {
-  bot.sendMessage(msg.chat.id, help());
+  bot.sendMessage(msg.chat.id, help(), { parse_mode: "HTML" });
+  console.log("Data Sent");
 });
 
 // get_weather
-bot.onText(/\/get_weather/, (msg) => {
-  bot.sendMessage(msg.chat.id, "Please Enter city name");
-  bot.on("message", (msg) => {
-    getWeather(msg.text.toString().toLowerCase())
-      .then(function (result) {
-        message =
-          `<b>Name: <i>${result.name}</i></b>` +
-          "\n\n" +
-          `<b>Country: <i>${result.country}</i></b>` +
-          "\n\n" +
-          `<b>Weather Condition: <i>${result.main_weather}</i></b>` +
-          "\n\n" +
-          `<b>Description: <i>${result.describe_weather}</i></b>`;
-        bot.sendMessage(msg.chat.id, message, { parse_mode: "HTML" });
-      })
-      .catch(function (error) {
-        message = "Sorry, An error occured.";
-        bot.sendMessage(msg.chat.id, message);
-      });
-  });
+bot.onText(/\/get_weather ([A-Za-z\s]+$)/, (msg, match) => {
+  getWeather(match[1].toString().toLowerCase())
+    .then(function (result) {
+      message =
+        `<b>Name: <i>${result.name}</i></b>` +
+        "\n\n" +
+        `<b>Country: <i>${result.country}</i></b>` +
+        "\n\n" +
+        `<b>Weather Condition: <i>${result.main_weather}</i></b>` +
+        "\n\n" +
+        `<b>Description: <i>${result.describe_weather}</i></b>`;
+      bot.sendMessage(msg.chat.id, message, { parse_mode: "HTML" });
+      console.log("Data Sent");
+    })
+    .catch(function (error) {
+      bot.sendMessage(msg.chat.id, "Sorry, An error occured.");
+      console.error(error);
+    });
 });
 
 // usd to naira
-bot.onText(/\/usd2naira/, (msg) => {
-  bot.sendMessage(msg.chat.id, "Please Enter Amount in USD");
-  bot.on("message", (msg) => {
-    usdToNaira(url, msg.text.toString())
-      .then((response) => {
-        console.log(response);
-        bot.sendMessage(msg.chat.id, `${response}`);
-      })
-      .catch((error) => {
-        console.log(error);
-        bot.sendMessage(msg.chat.id, "Sorry, An error occured.");
+bot.onText(/\/usd2naira (\$?[\d]+(\.\d*)?$)/, (msg, match) => {
+  usdToNaira(url, match[1].toString())
+    .then((response) => {
+      bot.sendMessage(msg.chat.id, `<b>$<i>${response}</i></b>`, {
+        parse_mode: "HTML",
       });
-  });
+      console.log("Data Sent");
+    })
+    .catch((error) => {
+      bot.sendMessage(msg.chat.id, "Sorry, An error occured.");
+      console.error(error);
+    });
 });
 
 // naira to usd
-bot.onText(/\/naira2usd/, (msg) => {
-  bot.sendMessage(msg.chat.id, "Please Enter Amount in Naira");
-  bot.on("message", (msg) => {
-    nairaToUsd(url, msg.text.toString())
-      .then((response) => {
-        console.log(response);
-        bot.sendMessage(msg.chat.id, `${response}`);
-      })
-      .catch((error) => {
-        console.log(error);
-        bot.sendMessage(msg.chat.id, "Sorry, An error occured.");
+bot.onText(/\/naira2usd (\$?[\d]+(\.\d*)?$)/, (msg, match) => {
+  nairaToUsd(url, match[1].toString())
+    .then((response) => {
+      bot.sendMessage(msg.chat.id, `<b>N<i>${response}</i></b>`, {
+        parse_mode: "HTML",
       });
-  });
+      console.log("Data Sent");
+    })
+    .catch((error) => {
+      bot.sendMessage(msg.chat.id, "Sorry, An error occured.");
+      console.error(error);
+    });
 });
 
-// get message user sends
+// get any message user sends
 bot.on("message", (msg) => {
   if (!msg.text.toString().toLowerCase().includes("/")) {
     var bye = "bye";
